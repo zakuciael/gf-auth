@@ -1,0 +1,17 @@
+[package]
+name = "gf-auth"
+version = "0.1.0"
+description = "A client SDK for Gameforge Auth APIs"
+authors = [ "Krzysztof Saczuk <me@krzysztofsaczuk.pl>" ]
+edition = "2021"
+homepage = "https://github.com/zakuciael/gf-auth"
+repository = "https://github.com/zakuciael/gf-auth"
+readme = "README.md"
+license = "MIT"
+categories = ["api-bindings"]
+keywords = ["nostale", "gf", "auth", "sdk"]
+
+[dependencies]
+native-tls = "0.2.11"
+openssl = "0.10.64"
+reqwest = { version = "0.12.4", features = ["native-tls", "json", "socks"] }
