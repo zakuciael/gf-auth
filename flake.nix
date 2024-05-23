@@ -28,7 +28,9 @@
       in {
         devShells.default = pkgs.mkShell {
           name = "gf-auth";
-          nativeBuildInputs = [
+          nativeBuildInputs = with pkgs; [
+            pkg-config
+            openssl
             (fenix.stable.withComponents [
               "cargo"
               "rustc"
