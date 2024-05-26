@@ -16,3 +16,8 @@
 > [!NOTE]
 > Please note that this library is currently being actively developed, which means there may be significant changes that
 > could cause compatibility issues between different releases.
+
+## Credits
+
+- [ramsayleung](https://github.com/ramsayleung) - For the [rspotify](https://github.com/ramsayleung/rspotify) crate,
+  that served as inspiration on how to handle multiple HTTP clients both async and sync.
