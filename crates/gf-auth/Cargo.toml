@@ -1,0 +1,49 @@
+[package]
+name = "gf-auth"
+version = "0.1.0"
+description = "A client SDK for Gameforge Auth APIs"
+authors = ["Krzysztof Saczuk <me@krzysztofsaczuk.pl>"]
+edition = "2021"
+homepage = "https://github.com/zakuciael/gf-auth"
+repository = "https://github.com/zakuciael/gf-auth"
+readme = "../../README.md"
+license = "MIT"
+categories = ["api-bindings"]
+keywords = ["nostale", "gf", "auth", "sdk"]
+
+[dependencies]
+gf-auth-http = { path = "../gf-auth-http", version = "0.1.0", default-features = false }
+
+async-trait = { version = "0.1.51", optional = true }
+
+log = "0.4.14"
+maybe-async = "0.2.6"
+serde = { version = "1.0.130", features = ["derive"] }
+serde_json = "1.0.67"
+thiserror = "1.0.29"
+url = "2.2.2"
+chrono = { version = "0.4.38", features = ["serde"] }
+
+[dev-dependencies]
+tokio = { version = "1.37.0", features = ["full"] }
+
+[features]
+# default = ["client-reqwest", "reqwest-default-tls"]
+
+client-ureq = ["gf-auth-http/client-ureq", "__sync"]
+client-reqwest = ["gf-auth-http/client-reqwest", "__async"]
+
+# Passing the TLS features to reqwest.
+reqwest-default-tls = ["gf-auth-http/reqwest-default-tls"]
+reqwest-rustls-tls = ["gf-auth-http/reqwest-rustls-tls"]
+reqwest-native-tls = ["gf-auth-http/reqwest-native-tls"]
+reqwest-native-tls-vendored = ["gf-auth-http/reqwest-native-tls-vendored"]
+# Same for ureq.
+ureq-rustls-tls = ["gf-auth-http/ureq-rustls-tls"]
+ureq-rustls-tls-native-certs = ["gf-auth-http/ureq-rustls-tls-native-certs"]
+ureq-native-tls = ["gf-auth-http/ureq-native-tls"]
+
+# Internal features for checking async or sync compilation
+# "futures", "async-stream",
+__async = ["async-trait"]
+__sync = ["maybe-async/is_sync"]
