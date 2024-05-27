@@ -5,14 +5,14 @@ use serde_json::Value;
 use crate::common::{BaseHttpClient, CustomCertHttpClient};
 use crate::{Form, Headers, Query};
 
-#[cfg(
-  all(any(
+#[cfg(all(
+  any(
     feature = "reqwest-default-tls",
     feature = "reqwest-native-tls",
     feature = "reqwest-native-tls-vendored"
-  )),
+  ),
   feature = "reqwest-rustls-tls"
-)]
+))]
 compile_error!(
   "`reqwest-default-tls` / `reqwest-native-tls` / `reqwest-native-tls-vendored` \
   and `reqwest-rustls-tls` features cannot be enabled at the same time."
@@ -153,7 +153,7 @@ impl BaseHttpClient for ReqwestClient {
     url: &str,
     headers: Option<&Headers>,
   ) -> Result<reqwest::Response, Self::Error> {
-    self.request(Method::OPTIONS, url, headers, |req| {}).await
+    self.request(Method::OPTIONS, url, headers, |req| req).await
   }
 }
 
