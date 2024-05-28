@@ -1,13 +1,13 @@
 #[cfg(any(feature = "client-reqwest", feature = "client-ureq"))]
 #[cfg(not(all(feature = "client-reqwest", feature = "client-ureq")))]
-pub use common::{BaseHttpClient, CustomCertHttpClient, Form, Headers, Query};
+pub use crate::common::{BaseHttpClient, CustomCertHttpClient, Form, Headers, HttpError, Query};
 
-#[cfg(feature = "client-reqwest")]
-#[cfg(not(all(feature = "client-reqwest", feature = "client-ureq")))]
-pub use self::reqwest::{ReqwestClient as HttpClient, ReqwestError as HttpError};
 #[cfg(feature = "client-ureq")]
 #[cfg(not(all(feature = "client-reqwest", feature = "client-ureq")))]
-pub use self::ureq::{UreqClient as HttpClient, UreqError as HttpError};
+pub use self::ureq::UreqClient as HttpClient;
+#[cfg(feature = "client-reqwest")]
+#[cfg(not(all(feature = "client-reqwest", feature = "client-ureq")))]
+pub use crate::reqwest::ReqwestClient as HttpClient;
 
 #[cfg(feature = "client-reqwest")]
 #[cfg(not(all(feature = "client-reqwest", feature = "client-ureq")))]
@@ -33,3 +33,6 @@ compile_error!(
   "You have to enable at least one of the available clients with the \
     `client-reqwest` or `client-ureq` features."
 );
+
+#[cfg(all(feature = "__async", feature = "__sync"))]
+compile_error!("Async and Sync versions of HttpClient cannot both be enabled at the same time.");

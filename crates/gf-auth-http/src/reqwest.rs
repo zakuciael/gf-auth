@@ -1,9 +1,10 @@
 use maybe_async::async_impl;
-use reqwest::{Method, RequestBuilder};
+use reqwest::header::HeaderMap;
+use reqwest::{Client, ClientBuilder, Error, Method, RequestBuilder, Response};
 use serde_json::Value;
+use std::error::Error as StdError;
 
-use crate::common::{BaseHttpClient, CustomCertHttpClient};
-use crate::{Form, Headers, Query};
+use crate::common::{CustomCertHttpClient, Form, Headers, HttpError, HttpResponse, Query};
 
 #[cfg(all(
   any(
@@ -27,26 +28,53 @@ compile_error!(
   features cannot be enabled at the same time."
 );
 
-#[derive(thiserror::Error, Debug)]
-pub enum ReqwestError {
-  /// The request couldn't be completed because there was an error when trying to do so
-  #[error("request: {0}")]
-  Client(#[from] reqwest::Error),
+fn convert_headers(raw: &HeaderMap) -> Headers {
+  raw
+    .iter()
+    .filter_map(|(key, value)| {
+      let value = match value.to_str() {
+        Ok(value) => value.to_string(),
+        Err(_) => {
+          log::error!("malformed header received: {key}");
+          return None;
+        }
+      };
 
-  /// The request was made, but the server returned an unsuccessful status
-  /// code, such as 404 or 503.
-  #[error("status code {}", reqwest::Response::status(.0))]
-  StatusCode(reqwest::Response),
+      Some((key.to_string().to_lowercase(), value))
+    })
+    .collect()
+}
+
+impl From<Error> for HttpError<Error> {
+  fn from(error: Error) -> Self {
+    match error.status() {
+      Some(status) => HttpError::Status {
+        status: status.as_u16(),
+        headers: Headers::new(),
+      },
+      None => HttpError::Client(error),
+    }
+  }
+}
+
+impl<T: StdError> From<Response> for HttpError<T> {
+  fn from(response: Response) -> Self {
+    HttpError::Status {
+      status: response.status().as_u16(),
+      headers: convert_headers(response.headers()),
+    }
+  }
 }
 
 #[derive(Debug, Clone)]
 pub struct ReqwestClient {
-  client: reqwest::Client,
+  #[allow(dead_code)]
+  client: Client,
 }
 
 impl Default for ReqwestClient {
   fn default() -> Self {
-    let client = reqwest::ClientBuilder::new()
+    let client = ClientBuilder::new()
       .build()
       // building with these options cannot fail
       .unwrap();
@@ -61,7 +89,7 @@ impl ReqwestClient {
     url: &str,
     headers: Option<&Headers>,
     add_data: D,
-  ) -> Result<reqwest::Response, ReqwestError>
+  ) -> Result<HttpResponse, HttpError<Error>>
   where
     D: Fn(RequestBuilder) -> RequestBuilder,
   {
@@ -77,16 +105,20 @@ impl ReqwestClient {
     let response = request.send().await?;
 
     if response.status().is_success() {
-      Ok(response)
+      Ok(HttpResponse::new(
+        response.status().as_u16(),
+        convert_headers(response.headers()),
+        response.text().await?,
+      ))
     } else {
-      Err(ReqwestError::StatusCode(response))
+      Err(response.into())
     }
   }
 }
 
 #[async_impl]
-impl BaseHttpClient for ReqwestClient {
-  type Error = ReqwestError;
+impl crate::common::BaseHttpClient for ReqwestClient {
+  type Error = HttpError<Error>;
 
   #[inline]
   async fn get(
@@ -94,7 +126,7 @@ impl BaseHttpClient for ReqwestClient {
     url: &str,
     headers: Option<&Headers>,
     payload: &Query,
-  ) -> Result<reqwest::Response, Self::Error> {
+  ) -> Result<HttpResponse, Self::Error> {
     self
       .request(Method::GET, url, headers, |req| req.query(payload))
       .await
@@ -106,7 +138,7 @@ impl BaseHttpClient for ReqwestClient {
     url: &str,
     headers: Option<&Headers>,
     payload: &Value,
-  ) -> Result<reqwest::Response, Self::Error> {
+  ) -> Result<HttpResponse, Self::Error> {
     self
       .request(Method::POST, url, headers, |req| req.json(payload))
       .await
@@ -118,7 +150,7 @@ impl BaseHttpClient for ReqwestClient {
     url: &str,
     headers: Option<&Headers>,
     payload: &Form<'_>,
-  ) -> Result<reqwest::Response, Self::Error> {
+  ) -> Result<HttpResponse, Self::Error> {
     self
       .request(Method::POST, url, headers, |req| req.form(payload))
       .await
@@ -130,7 +162,7 @@ impl BaseHttpClient for ReqwestClient {
     url: &str,
     headers: Option<&Headers>,
     payload: &Value,
-  ) -> Result<reqwest::Response, Self::Error> {
+  ) -> Result<HttpResponse, Self::Error> {
     self
       .request(Method::PUT, url, headers, |req| req.json(payload))
       .await
@@ -142,7 +174,7 @@ impl BaseHttpClient for ReqwestClient {
     url: &str,
     headers: Option<&Headers>,
     payload: &Value,
-  ) -> Result<reqwest::Response, Self::Error> {
+  ) -> Result<HttpResponse, Self::Error> {
     self
       .request(Method::DELETE, url, headers, |req| req.json(payload))
       .await
@@ -152,11 +184,16 @@ impl BaseHttpClient for ReqwestClient {
     &self,
     url: &str,
     headers: Option<&Headers>,
-  ) -> Result<reqwest::Response, Self::Error> {
+  ) -> Result<HttpResponse, Self::Error> {
     self.request(Method::OPTIONS, url, headers, |req| req).await
   }
 }
-
+#[cfg(any(
+  feature = "reqwest-native-tls",
+  feature = "reqwest-native-tls-vendored",
+  feature = "reqwest-default-tls",
+  feature = "reqwest-rustls-tls"
+))]
 impl CustomCertHttpClient for ReqwestClient {
   #[cfg(any(
     feature = "reqwest-native-tls",
@@ -175,7 +212,7 @@ impl CustomCertHttpClient for ReqwestClient {
     let root =
       reqwest::Certificate::from_pem(ca.as_ref()).expect("Failed to read CA root certificate");
 
-    let client = reqwest::Client::builder()
+    let client = Client::builder()
       .identity(identity)
       .add_root_certificate(root)
       .use_native_tls()
@@ -202,7 +239,7 @@ impl CustomCertHttpClient for ReqwestClient {
     let root =
       reqwest::Certificate::from_pem(ca.as_ref()).expect("Failed to read CA root certificate");
 
-    let client = reqwest::Client::builder()
+    let client = Client::builder()
       .identity(identity)
       .add_root_certificate(root)
       .use_rustls_tls()
@@ -215,11 +252,11 @@ impl CustomCertHttpClient for ReqwestClient {
 
 #[cfg(test)]
 mod tests {
-  use crate::common::{BaseHttpClient, CustomCertHttpClient};
-  use crate::reqwest::{ReqwestClient, ReqwestError};
-  use reqwest::StatusCode;
+  use crate::common::{BaseHttpClient, CustomCertHttpClient, HttpError};
+  use crate::reqwest::ReqwestClient;
+  use reqwest::Error;
 
-  async fn create_response_with_custom_cert() -> Result<(), ReqwestError> {
+  async fn create_response_with_custom_cert() -> Result<(), HttpError<Error>> {
     let client = ReqwestClient::with_custom_cert(
       include_bytes!("../../../resources/ca.pem"),
       include_bytes!("../../../resources/client.pem"),
@@ -234,13 +271,13 @@ mod tests {
       )
       .await?;
 
-    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(response.status(), 200);
     Ok(())
   }
 
   #[tokio::test]
   #[cfg(feature = "reqwest-rustls-tls")]
-  async fn create_client_with_custom_cert_rustls_tls() -> Result<(), ReqwestError> {
+  async fn create_client_with_custom_cert_rustls_tls() -> Result<(), HttpError<Error>> {
     println!("Testing reqwest with rustls-tls");
     create_response_with_custom_cert().await
   }
@@ -251,7 +288,7 @@ mod tests {
     feature = "reqwest-native-tls",
     feature = "reqwest-native-tls-vendored"
   ))]
-  async fn create_client_with_custom_cert_native_tls() -> Result<(), ReqwestError> {
+  async fn create_client_with_custom_cert_native_tls() -> Result<(), HttpError<Error>> {
     println!("Testing reqwest with native-tls");
     create_response_with_custom_cert().await
   }

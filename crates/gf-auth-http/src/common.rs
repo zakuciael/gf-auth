@@ -1,5 +1,6 @@
 use std::collections::HashMap;
-use std::fmt;
+use std::error::Error;
+use std::{fmt, io};
 
 use maybe_async::maybe_async;
 use serde_json::Value;
@@ -8,13 +9,52 @@ pub type Headers = HashMap<String, String>;
 pub type Query<'a> = HashMap<&'a str, &'a str>;
 pub type Form<'a> = HashMap<&'a str, &'a str>;
 
-#[cfg(feature = "client-ureq")]
-#[cfg(not(all(feature = "client-reqwest", feature = "client-ureq")))]
-pub type Response = ureq::Response;
+#[derive(thiserror::Error, Debug)]
+pub enum HttpError<T: Error> {
+  #[error("status code: {status}")]
+  Status { status: u16, headers: Headers },
+  #[error("request: {0}")]
+  Client(T),
+  #[error("I/O: {0}")]
+  IO(#[from] io::Error),
+}
 
-#[cfg(feature = "client-reqwest")]
-#[cfg(not(all(feature = "client-reqwest", feature = "client-ureq")))]
-pub type Response = reqwest::Response;
+impl<T: Error> HttpError<T> {
+  pub fn from_status(status: u16, headers: Headers) -> Self {
+    HttpError::Status { status, headers }
+  }
+
+  pub fn from_client(err: T) -> Self {
+    HttpError::Client(err)
+  }
+}
+
+pub struct HttpResponse {
+  status: u16,
+  headers: Headers,
+  body: String,
+}
+
+impl HttpResponse {
+  pub fn new(status: u16, headers: Headers, body: String) -> Self {
+    HttpResponse {
+      status,
+      headers,
+      body,
+    }
+  }
+
+  pub fn status(&self) -> u16 {
+    self.status
+  }
+
+  pub fn headers(&self) -> &Headers {
+    &self.headers
+  }
+  pub fn body(&self) -> &str {
+    &self.body
+  }
+}
 
 /// This trait represents the interface to be implemented for an HTTP client,
 /// which is kept separate from the gf-auth client for cleaner code.
@@ -34,37 +74,41 @@ pub trait BaseHttpClient: Send + Default + Clone + fmt::Debug {
     url: &str,
     headers: Option<&Headers>,
     payload: &Query,
-  ) -> Result<Response, Self::Error>;
+  ) -> Result<HttpResponse, Self::Error>;
 
   async fn post(
     &self,
     url: &str,
     headers: Option<&Headers>,
     payload: &Value,
-  ) -> Result<Response, Self::Error>;
+  ) -> Result<HttpResponse, Self::Error>;
 
   async fn post_form(
     &self,
     url: &str,
     headers: Option<&Headers>,
     payload: &Form<'_>,
-  ) -> Result<Response, Self::Error>;
+  ) -> Result<HttpResponse, Self::Error>;
 
   async fn put(
     &self,
     url: &str,
     headers: Option<&Headers>,
     payload: &Value,
-  ) -> Result<Response, Self::Error>;
+  ) -> Result<HttpResponse, Self::Error>;
 
   async fn delete(
     &self,
     url: &str,
     headers: Option<&Headers>,
     payload: &Value,
-  ) -> Result<Response, Self::Error>;
+  ) -> Result<HttpResponse, Self::Error>;
 
-  async fn options(&self, url: &str, headers: Option<&Headers>) -> Result<Response, Self::Error>;
+  async fn options(
+    &self,
+    url: &str,
+    headers: Option<&Headers>,
+  ) -> Result<HttpResponse, Self::Error>;
 }
 
 pub trait CustomCertHttpClient {
