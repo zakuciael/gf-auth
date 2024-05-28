@@ -25,19 +25,21 @@
         ...
       }: let
         fenix = inputs'.fenix.packages;
+        toolchain = fenix.stable.withComponents [
+          "cargo"
+          "rustc"
+          "rust-src"
+          "clippy"
+          "rustfmt"
+        ];
       in {
         devShells.default = pkgs.mkShell {
           name = "gf-auth";
           nativeBuildInputs = with pkgs; [
             pkg-config
             openssl
-            (fenix.stable.withComponents [
-              "cargo"
-              "rustc"
-              "rust-src"
-              "clippy"
-              "rustfmt"
-            ])
+            rustup
+            # toolchain // Replace rustup when RustRover supports rustfmt outside rustup
           ];
         };
       };
