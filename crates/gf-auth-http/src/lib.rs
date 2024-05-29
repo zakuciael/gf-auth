@@ -1,28 +1,4 @@
-#[cfg(any(feature = "client-reqwest", feature = "client-ureq"))]
-#[cfg(not(all(feature = "client-reqwest", feature = "client-ureq")))]
-extern crate reqwest as http_reqwest;
-#[cfg(feature = "client-ureq")]
-#[cfg(not(all(feature = "client-reqwest", feature = "client-ureq")))]
-extern crate ureq as http_ureq;
-
-#[cfg(any(feature = "client-reqwest", feature = "client-ureq"))]
-#[cfg(not(all(feature = "client-reqwest", feature = "client-ureq")))]
-pub use crate::common::{BaseHttpClient, CustomCertHttpClient, Form, Headers, HttpError, Query};
-
-#[cfg(feature = "client-ureq")]
-#[cfg(not(all(feature = "client-reqwest", feature = "client-ureq")))]
-pub use self::ureq::UreqClient as HttpClient;
-#[cfg(feature = "client-reqwest")]
-#[cfg(not(all(feature = "client-reqwest", feature = "client-ureq")))]
-pub use crate::reqwest::ReqwestClient as HttpClient;
-
-#[cfg(any(feature = "client-reqwest", feature = "client-ureq"))]
-#[cfg(not(all(feature = "client-reqwest", feature = "client-ureq")))]
-pub use http_reqwest::Error as ClientError;
-#[cfg(feature = "client-ureq")]
-#[cfg(not(all(feature = "client-reqwest", feature = "client-ureq")))]
-pub use http_ureq::Error as ClientError;
-
+mod common;
 #[cfg(feature = "client-reqwest")]
 #[cfg(not(all(feature = "client-reqwest", feature = "client-ureq")))]
 mod reqwest;
@@ -33,7 +9,15 @@ mod ureq;
 
 #[cfg(any(feature = "client-reqwest", feature = "client-ureq"))]
 #[cfg(not(all(feature = "client-reqwest", feature = "client-ureq")))]
-mod common;
+pub use crate::common::{BaseHttpClient, CustomCertHttpClient, Form, Headers, HttpError, Query};
+
+#[cfg(feature = "client-reqwest")]
+#[cfg(not(all(feature = "client-reqwest", feature = "client-ureq")))]
+pub use crate::reqwest::{ReqwestClient as HttpClient, ReqwestClientError as ClientError};
+
+#[cfg(feature = "client-ureq")]
+#[cfg(not(all(feature = "client-reqwest", feature = "client-ureq")))]
+pub use self::ureq::{UreqClient as HttpClient, UreqClientError as ClientError};
 
 #[cfg(all(feature = "client-reqwest", feature = "client-ureq"))]
 compile_error!(

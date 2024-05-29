@@ -1,8 +1,10 @@
+mod r#impl;
+mod utils;
+
+use crate::reqwest::utils::convert_headers;
 use maybe_async::async_impl;
-use reqwest::header::HeaderMap;
-use reqwest::{Client, ClientBuilder, Error, Method, RequestBuilder, Response};
+use reqwest::{Client, ClientBuilder, Error, Method, RequestBuilder};
 use serde_json::Value;
-use std::error::Error as StdError;
 
 use crate::common::{CustomCertHttpClient, Form, Headers, HttpError, HttpResponse, Query};
 
@@ -28,43 +30,7 @@ compile_error!(
   features cannot be enabled at the same time."
 );
 
-fn convert_headers(raw: &HeaderMap) -> Headers {
-  raw
-    .iter()
-    .filter_map(|(key, value)| {
-      let value = match value.to_str() {
-        Ok(value) => value.to_string(),
-        Err(_) => {
-          log::error!("malformed header received: {key}");
-          return None;
-        }
-      };
-
-      Some((key.to_string().to_lowercase(), value))
-    })
-    .collect()
-}
-
-impl From<Error> for HttpError<Error> {
-  fn from(error: Error) -> Self {
-    match error.status() {
-      Some(status) => HttpError::Status {
-        status: status.as_u16(),
-        headers: Headers::new(),
-      },
-      None => HttpError::Client(error),
-    }
-  }
-}
-
-impl<T: StdError> From<Response> for HttpError<T> {
-  fn from(response: Response) -> Self {
-    HttpError::Status {
-      status: response.status().as_u16(),
-      headers: convert_headers(response.headers()),
-    }
-  }
-}
+pub type ReqwestClientError = Error;
 
 #[derive(Debug, Clone)]
 pub struct ReqwestClient {
@@ -253,14 +219,14 @@ impl CustomCertHttpClient for ReqwestClient {
 #[cfg(test)]
 mod tests {
   use crate::common::{BaseHttpClient, CustomCertHttpClient, HttpError};
-  use crate::reqwest::ReqwestClient;
+  use crate::HttpClient;
   use reqwest::Error;
 
   async fn create_response_with_custom_cert() -> Result<(), HttpError<Error>> {
-    let client = ReqwestClient::with_custom_cert(
-      include_bytes!("../../../resources/ca.pem"),
-      include_bytes!("../../../resources/client.pem"),
-      include_bytes!("../../../resources/key.pem"),
+    let client = HttpClient::with_custom_cert(
+      include_bytes!("../../../../resources/ca.pem"),
+      include_bytes!("../../../../resources/client.pem"),
+      include_bytes!("../../../../resources/key.pem"),
     );
 
     let response = client

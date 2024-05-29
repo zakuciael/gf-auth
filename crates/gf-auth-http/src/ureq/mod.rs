@@ -1,9 +1,12 @@
-use std::error::Error as StdError;
+mod r#impl;
+mod utils;
+
 use std::time::Duration;
 
 use crate::common::{
   BaseHttpClient, CustomCertHttpClient, Form, Headers, HttpError, HttpResponse, Query,
 };
+use crate::ureq::utils::convert_headers;
 use maybe_async::sync_impl;
 use serde_json::Value;
 use ureq::{Agent, AgentBuilder, Error, Request, Response};
@@ -23,41 +26,7 @@ compile_error!(
   features cannot be enabled at the same time."
 );
 
-fn convert_headers(response: &Response) -> Headers {
-  response
-    .headers_names()
-    .iter()
-    .filter_map(|key| {
-      let value = match response.header(key) {
-        Some(value) => value.to_string(),
-        None => {
-          log::error!("malformed header received: {key}");
-          return None;
-        }
-      };
-
-      Some((key.to_string().to_lowercase(), value))
-    })
-    .collect()
-}
-
-impl From<Error> for HttpError<Error> {
-  fn from(error: Error) -> Self {
-    match error {
-      Error::Status(_, response) => response.into(),
-      Error::Transport(_) => HttpError::Client(error),
-    }
-  }
-}
-
-impl<T: StdError> From<Response> for HttpError<T> {
-  fn from(response: Response) -> Self {
-    HttpError::Status {
-      status: response.status(),
-      headers: convert_headers(&response),
-    }
-  }
-}
+pub type UreqClientError = Error;
 
 #[derive(Debug, Clone)]
 pub struct UreqClient {
@@ -226,8 +195,9 @@ impl CustomCertHttpClient for UreqClient {
       root_store
     };
 
-    root_store
-      .add_parsable_certificates(rustls_pemfile::certs(&mut std::io::Cursor::new(ca.as_ref())).flatten());
+    root_store.add_parsable_certificates(
+      rustls_pemfile::certs(&mut std::io::Cursor::new(ca.as_ref())).flatten(),
+    );
 
     let private_key = rustls_pemfile::private_key(&mut std::io::Cursor::new(key.as_ref()))
       .and_then(|item| item.ok_or(std::io::Error::from(std::io::ErrorKind::UnexpectedEof)))
@@ -288,9 +258,9 @@ mod tests {
 
   fn create_response_with_custom_cert() -> Result<(), HttpError<Error>> {
     let client = UreqClient::with_custom_cert(
-      include_bytes!("../../../resources/ca.pem"),
-      include_bytes!("../../../resources/client.pem"),
-      include_bytes!("../../../resources/key.pem"),
+      include_bytes!("../../../../resources/ca.pem"),
+      include_bytes!("../../../../resources/client.pem"),
+      include_bytes!("../../../../resources/key.pem"),
     );
 
     let response = client.get(
