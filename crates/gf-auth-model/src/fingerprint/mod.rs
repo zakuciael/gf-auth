@@ -1,5 +1,8 @@
+mod timings;
 mod utils;
 mod vector;
+
+pub use crate::fingerprint::timings::TimingRange;
 
 use crate::fingerprint::vector::Vector;
 use chrono::{DateTime, Utc};
@@ -84,6 +87,14 @@ impl Fingerprint {
   pub fn update_server_time(&mut self) {
     // TODO: Actually fetch game1.js file and extract date from the header
     self.server_time = Utc::now();
+  }
+
+  pub fn update_delta(&mut self, range: &TimingRange) {
+    self.delta = range.generate();
+  }
+
+  pub fn update_creation(&mut self) {
+    self.creation = Utc::now();
   }
 
   pub fn set_request(&mut self, request: Request) {

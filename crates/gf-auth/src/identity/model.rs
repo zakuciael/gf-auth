@@ -1,27 +1,15 @@
-use gf_auth_model::Fingerprint;
+use gf_auth_model::{Fingerprint, TimingRange};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
-pub struct TimingRange {
-  min: u32,
-  max: u32,
-}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Identity {
   #[serde(default)]
-  timing: TimingRange,
-  fingerprint: Fingerprint,
+  pub timing: TimingRange,
+  pub fingerprint: Fingerprint,
 
   #[serde(default = "uuid::Uuid::new_v4")]
-  installation_id: Uuid,
-}
-
-impl Default for TimingRange {
-  fn default() -> Self {
-    TimingRange { min: 150, max: 300 }
-  }
+  pub installation_id: Uuid,
 }
 
 #[cfg(test)]
