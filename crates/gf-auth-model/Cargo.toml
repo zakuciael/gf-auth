@@ -1,0 +1,27 @@
+[package]
+name = "gf-auth-model"
+version = "0.1.0"
+description = "Models for gf-auth"
+authors = ["Krzysztof Saczuk <me@krzysztofsaczuk.pl>"]
+edition = "2021"
+homepage = "https://github.com/zakuciael/gf-auth"
+repository = "https://github.com/zakuciael/gf-auth"
+readme = "../../README.md"
+license = "MIT"
+categories = ["api-bindings"]
+keywords = ["nostale", "gf", "auth", "sdk"]
+
+[dependencies]
+gf-auth-macros = { path = "../gf-auth-macros", version = "0.1.0" }
+gf-auth-traits = { path = "../gf-auth-traits", version = "0.1.0" }
+
+serde = { version = "1.0.203", features = ["derive"] }
+chrono = { version = "0.4.38", features = ["serde", "now"] }
+rand = { version = "0.8.5", features = ["serde"] }
+serde_json = "1.0.117"
+thiserror = "1.0.61"
+serde_tuple = "0.5.0"
+url = "2.2.2"
+base64 = "0.22.1"
+num-traits = "0.2.19"
+percent-encoding = "2.3.1"

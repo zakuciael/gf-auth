@@ -3,17 +3,18 @@ mod vector;
 
 use crate::fingerprint::vector::Vector;
 use chrono::{DateTime, Utc};
+use gf_auth_macros::{DeserializeTuple, SerializeTuple};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub(crate) struct Request {
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+pub struct Request {
   features: Vec<u64>,
   installation: String,
   session: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub(crate) struct Fingerprint {
+#[derive(Serialize, SerializeTuple, Deserialize, DeserializeTuple, Debug, Clone, PartialEq)]
+pub struct Fingerprint {
   #[serde(alias = "v")]
   version: u32,
   #[serde(alias = "tz")]
@@ -64,23 +65,20 @@ pub(crate) struct Fingerprint {
   #[serde(alias = "d")]
   delta: u32,
   #[serde(alias = "osVersion")]
-  os_version: String,
-  vector: Option<Vector>,
+  os_version: Option<String>,
+  vector: Vector,
   #[serde(alias = "userAgent")]
   user_agent: String,
   #[serde(alias = "serverTimeInMS")]
   server_time: DateTime<Utc>,
-  #[serde(alias = "request", skip_serializing_if = "Option::is_none")]
+  #[serde(alias = "request")]
+  #[serde(default)]
   request: Option<Request>,
 }
 
 impl Fingerprint {
   pub fn update_vector(&mut self) {
-    if let Some(ref mut vector) = &mut self.vector {
-      vector.update();
-    } else {
-      self.vector = Some(Vector::default());
-    }
+    self.vector.update();
   }
 
   pub fn update_server_time(&mut self) {
@@ -95,39 +93,23 @@ impl Fingerprint {
 
 #[cfg(test)]
 mod tests {
-  use std::error::Error;
   use std::fs;
 
   use crate::fingerprint::Fingerprint;
 
   #[test]
-  fn parse_fingerprint() -> Result<(), Box<dyn Error>> {
-    let file =
-      fs::read_to_string("./resources/fingerprint1.json").expect("Failed to read fingerprint file");
+  fn parse_fingerprint() {
+    let file = fs::read_to_string("../../resources/blackbox/fingerprint_no_request.json")
+      .expect("Failed to read fingerprint file");
 
-    println!("{:?}", serde_json::from_str::<Fingerprint>(&file)?);
-    Ok(())
+    assert!(serde_json::from_str::<Fingerprint>(&file).is_ok())
   }
 
   #[test]
-  fn parse_fingerprint_with_request() -> Result<(), Box<dyn Error>> {
-    let file = fs::read_to_string("./resources/fingerprint2.json")
+  fn parse_fingerprint_with_request() {
+    let file = fs::read_to_string("../../resources/blackbox/fingerprint_with_request.json")
       .expect("Failed to read fingerprint file.");
 
-    println!("{:?}", serde_json::from_str::<Fingerprint>(&file)?);
-    Ok(())
-  }
-
-  #[test]
-  fn update_vector() -> Result<(), Box<dyn Error>> {
-    let file =
-      fs::read_to_string("./resources/fingerprint1.json").expect("Failed to read fingerprint file");
-
-    let mut fingerprint = serde_json::from_str::<Fingerprint>(&file)?;
-    println!("{:?}", fingerprint.vector);
-
-    fingerprint.update_vector();
-    println!("{:?}", fingerprint.vector);
-    Ok(())
+    assert!(serde_json::from_str::<Fingerprint>(&file).is_ok())
   }
 }

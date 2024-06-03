@@ -13,6 +13,8 @@ keywords = ["nostale", "gf", "auth", "sdk"]
 
 [dependencies]
 gf-auth-http = { path = "../gf-auth-http", version = "0.1.0", default-features = false }
+gf-auth-model = { path = "../gf-auth-model", version = "0.1.0" }
+gf-auth-traits = { path = "../gf-auth-traits", version = "0.1.0" }
 
 async-trait = { version = "0.1.51", optional = true }
 

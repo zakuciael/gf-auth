@@ -1,0 +1,26 @@
+[package]
+name = "gf-auth-macros"
+version = "0.1.0"
+description = "Macros for gf-auth"
+authors = ["Krzysztof Saczuk <me@krzysztofsaczuk.pl>"]
+edition = "2021"
+homepage = "https://github.com/zakuciael/gf-auth"
+repository = "https://github.com/zakuciael/gf-auth"
+readme = "../../README.md"
+license = "MIT"
+categories = ["api-bindings"]
+keywords = ["nostale", "gf", "auth", "sdk"]
+
+[dependencies]
+gf-auth-traits = { path = "../gf-auth-traits", version = "0.1.0" }
+serde_tuple = "0.5.0"
+
+proc-macro2 = "1"
+quote = "1"
+
+[dependencies.syn]
+features = ["full", "extra-traits"]
+version = "1"
+
+[lib]
+proc-macro = true

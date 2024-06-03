@@ -1,0 +1,40 @@
+{
+  "v": 9,
+  "tz": "Europe/Warsaw",
+  "dnt": false,
+  "product": "Blink",
+  "osType": "Linux",
+  "app": "Chrome",
+  "vendor": "Google Inc.",
+  "mem": 8,
+  "con": 12,
+  "lang": "en-US,pl,en",
+  "plugins": "4091fcb91ba848a33ef2c5071f062439201f36a4fc054a875a18c361f4abdedb",
+  "gpu": "Google Inc. (AMD),ANGLE (AMD, AMD Radeon RX 5700 XT (radeonsi navi10 LLVM 17.0.6), OpenGL ES 3.2)",
+  "fonts": "6ab3b6cf30d164dd769f1c911cbf6a2fef1e540ecf594b5020f55de0bcfcd844",
+  "audioC": "d9af7aa1d00f202e8291fe49b9344f69746635eea53e7eace68c10f302cc933a",
+  "width": 1080,
+  "height": 1920,
+  "depth": 24,
+  "video": "3767a83c51cda390de10e37350a640d8be0af56991b5f65b081809a6d29df03f",
+  "audio": "5a0ef26fd9ff096689feaad0d49fb8551822ea6b3be74a02794c2aa10ead141f",
+  "media": "6aeb6412b24ba7dd08653eb50179026602499917a6400174f9ad7e9bef78abf2",
+  "permissions": "211043d72f4d0b15e2ffab9ecde16f7c4b8e390c7bfb40e72fd2ecd73aa2c3e5",
+  "audioFP": 124.04347527516074,
+  "webglFP": "f4fa40f2c490cdc5b461b9412466279db6f1db67127332c5e3fd6290ba9c377c",
+  "canvasFP": 1640737682,
+  "creation": "2024-06-03T03:41:46.234Z",
+  "uuid": "0qhlw0gykvqqu0stw255u1l8ebr",
+  "d": 484,
+  "osVersion": null,
+  "vector": "SkxiRWJGLUxnaGIwM1RgVlopOjU0NmU9SHwoc1tkLz5pX1BbOjohSkt5LzF5dy4jVkZxImQya30nenomc3QsZy5pIEJtJWVQTkZdVX0lKlliYStcaGhqST13ZiJCYC0+WSNuNyAxNzE3Mzg2MTA1NzUw",
+  "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+  "serverTimeInMS": "2024-06-03T03:41:46.000Z",
+  "request": {
+    "features": [
+      123456
+    ],
+    "installation": "daaf50d1-b33e-4657-a41d-819e38b9859b",
+    "session": "1e2292ee-f59c-4fec-b3b0-4db25f05de39"
+  }
+}

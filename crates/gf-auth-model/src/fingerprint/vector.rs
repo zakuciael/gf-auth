@@ -1,4 +1,5 @@
 use crate::fingerprint::utils::{generate_vector, random_ascii_char};
+use base64::Engine;
 use chrono::{DateTime, TimeDelta, Utc};
 use serde::de::{Error, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -14,7 +15,7 @@ pub(crate) enum VectorError {
   Timestamp,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub(crate) struct Vector {
   pub content: String,
   pub time: DateTime<Utc>,
@@ -25,7 +26,7 @@ impl Vector {
     let current_time = Utc::now();
 
     if self.time.add(TimeDelta::milliseconds(1000)) < current_time {
-      let mid = (&self.content[1..]).to_owned();
+      let mid = self.content[1..].to_owned();
       let rand_char = random_ascii_char().to_string();
 
       self.content = mid + &rand_char;
@@ -54,15 +55,15 @@ impl FromStr for Vector {
   type Err = VectorError;
 
   fn from_str(vector: &str) -> Result<Self, Self::Err> {
-    let index = vector.find(' ').ok_or_else(|| VectorError::Invalid)?;
+    let index = vector.rfind(' ').ok_or(VectorError::Invalid)?;
 
-    let content = (&vector[0..index]).to_owned();
+    let content = vector[0..index].to_owned();
     let time = DateTime::from_timestamp_millis(
-      (&vector[index + 1..])
+      vector[index + 1..]
         .parse::<i64>()
         .map_err(|_| VectorError::Timestamp)?,
     )
-    .ok_or_else(|| VectorError::Timestamp)?;
+    .ok_or(VectorError::Timestamp)?;
 
     Ok(Vector { content, time })
   }
@@ -82,7 +83,7 @@ impl Serialize for Vector {
   where
     S: Serializer,
   {
-    serializer.serialize_str(&self.to_string())
+    serializer.serialize_str(&base64::engine::general_purpose::STANDARD.encode(self.to_string()))
   }
 }
 
@@ -99,7 +100,15 @@ impl<'de> Visitor<'de> for VectorVisitor {
   where
     E: Error,
   {
-    Vector::from_str(value).map_err(|_| Error::custom("invalid vector string"))
+    let vector = String::from_utf8(
+      base64::engine::general_purpose::STANDARD
+        .decode(value)
+        .map_err(|_| Error::custom("failed to decode base64 vector"))?,
+    )
+    .map_err(|_| Error::custom("invalid utf8 string"))?;
+
+    Vector::from_str(&vector)
+      .map_err(|err| Error::custom(format!("invalid vector string: {:?}", err)))
   }
 
   fn visit_none<E>(self) -> Result<Self::Value, E>
