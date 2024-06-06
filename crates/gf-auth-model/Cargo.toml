@@ -18,6 +18,7 @@ gf-auth-traits = { path = "../gf-auth-traits", version = "0.1.0" }
 serde = { version = "1.0.203", features = ["derive"] }
 chrono = { version = "0.4.38", features = ["serde", "now"] }
 rand = { version = "0.8.5", features = ["serde"] }
+uuid = { version = "1.8.0", features = ["v4", "serde"] }
 serde_json = "1.0.117"
 thiserror = "1.0.61"
 serde_tuple = "0.5.0"

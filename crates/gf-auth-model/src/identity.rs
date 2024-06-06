@@ -1,8 +1,8 @@
-use gf_auth_model::{Fingerprint, TimingRange};
+use crate::{Fingerprint, TimingRange};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Identity {
   #[serde(default)]
   pub timing: TimingRange,
@@ -14,7 +14,8 @@ pub struct Identity {
 
 #[cfg(test)]
 mod tests {
-  use crate::identity::model::{Identity, TimingRange};
+  use crate::identity::Identity;
+  use crate::TimingRange;
   use std::fs;
   use uuid::uuid;
 
