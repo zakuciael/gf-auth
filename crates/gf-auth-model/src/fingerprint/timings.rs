@@ -1,7 +1,7 @@
 use rand::distributions::{Distribution, Uniform};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct TimingRange {
   pub min: u32,
   pub max: u32,
@@ -16,12 +16,6 @@ impl TimingRange {
     let distribution = Uniform::from(self.min..self.max);
     let mut rng = rand::thread_rng();
     distribution.sample(&mut rng)
-  }
-}
-
-impl PartialEq for TimingRange {
-  fn eq(&self, other: &Self) -> bool {
-    self.min.eq(&other.min) && self.max.eq(&other.max)
   }
 }
 
