@@ -64,7 +64,7 @@ pub struct Fingerprint {
   canvas_fingerprint: f64,
   creation: DateTime<Utc>,
   #[serde(alias = "uuid")]
-  game: Option<String>,
+  game: String,
   #[serde(alias = "d")]
   delta: u32,
   #[serde(alias = "osVersion")]
