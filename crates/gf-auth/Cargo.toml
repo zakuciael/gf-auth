@@ -26,7 +26,7 @@ thiserror = "1.0.29"
 url = "2.2.2"
 chrono = { version = "0.4.38", features = ["serde", "now"] }
 rand = { version = "0.8.5", features = ["serde"] }
-uuid = { version = "1.8.0", features = ["v4", "serde"] }
+futures = "0.3.30"
 
 [dev-dependencies]
 tokio = { version = "1.37.0", features = ["full"] }
