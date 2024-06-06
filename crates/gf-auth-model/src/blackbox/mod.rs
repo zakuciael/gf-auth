@@ -1,12 +1,13 @@
 mod error;
+mod ser;
 
 pub use crate::blackbox::error::{BlackboxError, BlackboxResult};
 use crate::fingerprint::Fingerprint;
 use base64::Engine;
-use gf_auth_traits::{DeserializeTuple, SerializeTuple};
+use gf_auth_traits::SerializeTuple;
 use num_traits::cast::FromPrimitive;
 use percent_encoding::{AsciiSet, NON_ALPHANUMERIC};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Serializer};
 
 const URI_COMPONENT_SET: &AsciiSet = &NON_ALPHANUMERIC
   .remove(b'-')
@@ -19,12 +20,8 @@ const URI_COMPONENT_SET: &AsciiSet = &NON_ALPHANUMERIC
   .remove(b'(')
   .remove(b')');
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Blackbox(
-  #[serde(serialize_with = "crate::fingerprint::Fingerprint::serialize_tuple")]
-  #[serde(deserialize_with = "crate::fingerprint::Fingerprint::deserialize_tuple")]
-  pub Fingerprint,
-);
+#[derive(Deserialize, Debug)]
+pub struct Blackbox(pub Fingerprint);
 
 impl Blackbox {
   pub fn new(fingerprint: Fingerprint) -> Blackbox {
@@ -32,7 +29,23 @@ impl Blackbox {
   }
 
   pub fn encode(&self) -> BlackboxResult<String> {
-    let json = serde_json::to_string(&self)?;
+    let json = {
+      struct FingerprintWrapper<'a> {
+        value: &'a Fingerprint,
+      }
+
+      impl<'a> Serialize for FingerprintWrapper<'a> {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+          S: Serializer,
+        {
+          self.value.serialize_tuple(serializer)
+        }
+      }
+
+      let wrapper = FingerprintWrapper { value: &self.0 };
+      serde_json::to_string(&wrapper)?
+    };
     let url_encoded = percent_encoding::utf8_percent_encode(&json, URI_COMPONENT_SET)
       .collect::<String>()
       .into_bytes();
@@ -57,8 +70,7 @@ mod tests {
   use crate::fingerprint::Fingerprint;
   use std::fs;
 
-  #[test]
-  fn encode() {
+  fn load_blackbox() -> (String, Blackbox) {
     let fingerprint_file =
       fs::read_to_string("../../resources/blackbox/fingerprint_no_request.json")
         .expect("Failed to read fingerprint file");
@@ -67,10 +79,25 @@ mod tests {
 
     let fingerprint =
       serde_json::from_str::<Fingerprint>(&fingerprint_file).expect("Failed to parse fingerprint");
-    let blackbox = Blackbox::new(fingerprint);
+
+    (blackbox_file, Blackbox::new(fingerprint))
+  }
+
+  #[test]
+  fn encode() {
+    let (blackbox_file, blackbox) = load_blackbox();
 
     let encoded = blackbox.encode();
     assert!(encoded.is_ok());
     assert_eq!(encoded.unwrap(), blackbox_file);
+  }
+
+  #[test]
+  fn serialize() {
+    let (blackbox_file, blackbox) = load_blackbox();
+
+    let encoded = serde_json::to_string(&blackbox);
+    assert!(encoded.is_ok());
+    assert_eq!(encoded.unwrap(), format!("\"{}\"", blackbox_file));
   }
 }
