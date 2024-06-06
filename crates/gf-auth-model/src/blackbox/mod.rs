@@ -1,4 +1,5 @@
 mod constants;
+mod de;
 mod ser;
 
 use crate::fingerprint::Fingerprint;
@@ -29,6 +30,16 @@ mod tests {
     };
 
     (fingerprint, blackbox_str)
+  }
+
+  #[test]
+  fn deserialize() -> Result<(), Box<dyn std::error::Error>> {
+    let (fingerprint, blackbox_str) = load_data();
+
+    let deserialized = serde_plain::from_str::<Blackbox>(&blackbox_str)?;
+    assert_eq!(deserialized.0, fingerprint);
+
+    Ok(())
   }
 
   #[test]
