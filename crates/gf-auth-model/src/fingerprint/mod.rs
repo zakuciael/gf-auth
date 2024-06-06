@@ -16,7 +16,7 @@ pub struct Request {
   session: String,
 }
 
-#[derive(Serialize, SerializeTuple, Deserialize, DeserializeTuple, Debug, Clone, PartialEq)]
+#[derive(Serialize, Deserialize, SerializeTuple, DeserializeTuple, Debug, Clone, PartialEq)]
 pub struct Fingerprint {
   #[serde(alias = "v")]
   version: u32,
