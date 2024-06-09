@@ -1,3 +1,4 @@
+pub mod api;
 mod blackbox;
 mod fingerprint;
 mod identity;
