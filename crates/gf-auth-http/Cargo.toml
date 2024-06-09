@@ -13,6 +13,7 @@ keywords = ["nostale", "gf", "auth", "sdk"]
 
 [dependencies]
 async-trait = { version = "0.1.80", optional = true }
+serde = { version = "1.0.203", features = ["derive"] }
 log = "0.4.21"
 maybe-async = "0.2.10"
 serde_json = "1.0.117"

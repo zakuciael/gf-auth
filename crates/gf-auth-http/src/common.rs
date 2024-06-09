@@ -3,7 +3,7 @@ use std::error::Error;
 use std::{fmt, io};
 
 use maybe_async::maybe_async;
-use serde_json::Value;
+use serde::Serialize;
 
 pub type Headers = HashMap<String, String>;
 pub type Query<'a> = HashMap<&'a str, &'a str>;
@@ -76,12 +76,14 @@ pub trait BaseHttpClient: Send + Default + Clone + fmt::Debug {
     payload: &Query,
   ) -> Result<HttpResponse, Self::Error>;
 
-  async fn post(
+  async fn post<T>(
     &self,
     url: &str,
     headers: Option<&Headers>,
-    payload: &Value,
-  ) -> Result<HttpResponse, Self::Error>;
+    payload: &T,
+  ) -> Result<HttpResponse, Self::Error>
+  where
+    T: Serialize + Send + ?Sized + Sync;
 
   async fn post_form(
     &self,
@@ -90,19 +92,23 @@ pub trait BaseHttpClient: Send + Default + Clone + fmt::Debug {
     payload: &Form<'_>,
   ) -> Result<HttpResponse, Self::Error>;
 
-  async fn put(
+  async fn put<T>(
     &self,
     url: &str,
     headers: Option<&Headers>,
-    payload: &Value,
-  ) -> Result<HttpResponse, Self::Error>;
+    payload: &T,
+  ) -> Result<HttpResponse, Self::Error>
+  where
+    T: Serialize + Send + ?Sized + Sync;
 
-  async fn delete(
+  async fn delete<T>(
     &self,
     url: &str,
     headers: Option<&Headers>,
-    payload: &Value,
-  ) -> Result<HttpResponse, Self::Error>;
+    payload: &T,
+  ) -> Result<HttpResponse, Self::Error>
+  where
+    T: Serialize + Send + ?Sized + Sync;
 
   async fn options(
     &self,

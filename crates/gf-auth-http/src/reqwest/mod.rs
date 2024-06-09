@@ -4,7 +4,7 @@ mod utils;
 use crate::reqwest::utils::convert_headers;
 use maybe_async::async_impl;
 use reqwest::{Client, ClientBuilder, Error, Method, RequestBuilder};
-use serde_json::Value;
+use serde::Serialize;
 
 use crate::common::{CustomCertHttpClient, Form, Headers, HttpError, HttpResponse, Query};
 
@@ -99,12 +99,15 @@ impl crate::common::BaseHttpClient for ReqwestClient {
   }
 
   #[inline]
-  async fn post(
+  async fn post<T>(
     &self,
     url: &str,
     headers: Option<&Headers>,
-    payload: &Value,
-  ) -> Result<HttpResponse, Self::Error> {
+    payload: &T,
+  ) -> Result<HttpResponse, Self::Error>
+  where
+    T: Serialize + Send + ?Sized + Sync,
+  {
     self
       .request(Method::POST, url, headers, |req| req.json(payload))
       .await
@@ -123,24 +126,30 @@ impl crate::common::BaseHttpClient for ReqwestClient {
   }
 
   #[inline]
-  async fn put(
+  async fn put<T>(
     &self,
     url: &str,
     headers: Option<&Headers>,
-    payload: &Value,
-  ) -> Result<HttpResponse, Self::Error> {
+    payload: &T,
+  ) -> Result<HttpResponse, Self::Error>
+  where
+    T: Serialize + Send + ?Sized + Sync,
+  {
     self
       .request(Method::PUT, url, headers, |req| req.json(payload))
       .await
   }
 
   #[inline]
-  async fn delete(
+  async fn delete<T>(
     &self,
     url: &str,
     headers: Option<&Headers>,
-    payload: &Value,
-  ) -> Result<HttpResponse, Self::Error> {
+    payload: &T,
+  ) -> Result<HttpResponse, Self::Error>
+  where
+    T: Serialize + Send + ?Sized + Sync,
+  {
     self
       .request(Method::DELETE, url, headers, |req| req.json(payload))
       .await

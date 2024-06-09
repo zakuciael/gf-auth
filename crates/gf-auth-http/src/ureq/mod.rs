@@ -8,7 +8,7 @@ use crate::common::{
 };
 use crate::ureq::utils::convert_headers;
 use maybe_async::sync_impl;
-use serde_json::Value;
+use serde::Serialize;
 use ureq::{Agent, AgentBuilder, Error, Request, Response};
 
 #[cfg(all(
@@ -104,14 +104,17 @@ impl BaseHttpClient for UreqClient {
   }
 
   #[inline]
-  fn post(
+  fn post<T>(
     &self,
     url: &str,
     headers: Option<&Headers>,
-    payload: &Value,
-  ) -> Result<HttpResponse, Self::Error> {
+    payload: &T,
+  ) -> Result<HttpResponse, Self::Error>
+  where
+    T: Serialize + Send + ?Sized + Sync,
+  {
     let request = self.agent.post(url);
-    let sender = |req: Request| req.send_json(payload.clone());
+    let sender = |req: Request| req.send_json(payload);
     self.request(request, headers, sender)
   }
 
@@ -136,26 +139,32 @@ impl BaseHttpClient for UreqClient {
   }
 
   #[inline]
-  fn put(
+  fn put<T>(
     &self,
     url: &str,
     headers: Option<&Headers>,
-    payload: &Value,
-  ) -> Result<HttpResponse, Self::Error> {
+    payload: &T,
+  ) -> Result<HttpResponse, Self::Error>
+  where
+    T: Serialize + Send + ?Sized + Sync,
+  {
     let request = self.agent.put(url);
-    let sender = |req: Request| req.send_json(payload.clone());
+    let sender = |req: Request| req.send_json(payload);
     self.request(request, headers, sender)
   }
 
   #[inline]
-  fn delete(
+  fn delete<T>(
     &self,
     url: &str,
     headers: Option<&Headers>,
-    payload: &Value,
-  ) -> Result<HttpResponse, Self::Error> {
+    payload: &T,
+  ) -> Result<HttpResponse, Self::Error>
+  where
+    T: Serialize + Send + ?Sized + Sync,
+  {
     let request = self.agent.delete(url);
-    let sender = |req: Request| req.send_json(payload.clone());
+    let sender = |req: Request| req.send_json(payload);
     self.request(request, headers, sender)
   }
 
