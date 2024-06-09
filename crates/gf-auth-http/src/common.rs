@@ -102,11 +102,7 @@ pub trait BaseHttpClient: Send + Default + Clone + fmt::Debug {
   where
     T: Serialize + Send + ?Sized + Sync;
 
-  async fn options(
-    &self,
-    url: &str,
-    headers: Option<&Headers>,
-  ) -> Result<HttpResponse, Self::Error>;
+  async fn options(&self, url: &str, headers: &Headers) -> Result<HttpResponse, Self::Error>;
 }
 
 pub trait CustomCertHttpClient {

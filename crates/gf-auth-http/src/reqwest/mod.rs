@@ -143,12 +143,10 @@ impl crate::common::BaseHttpClient for ReqwestClient {
       .await
   }
 
-  async fn options(
-    &self,
-    url: &str,
-    headers: Option<&Headers>,
-  ) -> Result<HttpResponse, Self::Error> {
-    self.request(Method::OPTIONS, url, headers, |req| req).await
+  async fn options(&self, url: &str, headers: &Headers) -> Result<HttpResponse, Self::Error> {
+    self
+      .request(Method::OPTIONS, url, Some(headers), |req| req)
+      .await
   }
 }
 #[cfg(any(

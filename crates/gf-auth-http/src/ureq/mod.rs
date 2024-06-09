@@ -148,10 +148,10 @@ impl BaseHttpClient for UreqClient {
     self.request(request, headers, sender)
   }
 
-  fn options(&self, url: &str, headers: Option<&Headers>) -> Result<HttpResponse, Self::Error> {
+  fn options(&self, url: &str, headers: &Headers) -> Result<HttpResponse, Self::Error> {
     let request = self.agent.request("OPTIONS", url);
     let sender = |req: Request| req.call();
-    self.request(request, headers, sender)
+    self.request(request, Some(headers), sender)
   }
 }
 
