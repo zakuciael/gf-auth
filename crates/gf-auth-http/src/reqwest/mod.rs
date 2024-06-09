@@ -6,7 +6,7 @@ use maybe_async::async_impl;
 use reqwest::{Client, ClientBuilder, Error, Method, RequestBuilder};
 use serde::Serialize;
 
-use crate::common::{CustomCertHttpClient, Form, Headers, HttpError, HttpResponse, Query};
+use crate::common::{CustomCertHttpClient, Headers, HttpError, HttpResponse, Query};
 
 #[cfg(all(
   any(
@@ -110,18 +110,6 @@ impl crate::common::BaseHttpClient for ReqwestClient {
   {
     self
       .request(Method::POST, url, headers, |req| req.json(payload))
-      .await
-  }
-
-  #[inline]
-  async fn post_form(
-    &self,
-    url: &str,
-    headers: Option<&Headers>,
-    payload: &Form<'_>,
-  ) -> Result<HttpResponse, Self::Error> {
-    self
-      .request(Method::POST, url, headers, |req| req.form(payload))
       .await
   }
 

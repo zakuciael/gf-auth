@@ -4,7 +4,7 @@ mod utils;
 use std::time::Duration;
 
 use crate::common::{
-  BaseHttpClient, CustomCertHttpClient, Form, Headers, HttpError, HttpResponse, Query,
+  BaseHttpClient, CustomCertHttpClient, Headers, HttpError, HttpResponse, Query,
 };
 use crate::ureq::utils::convert_headers;
 use maybe_async::sync_impl;
@@ -115,26 +115,6 @@ impl BaseHttpClient for UreqClient {
   {
     let request = self.agent.post(url);
     let sender = |req: Request| req.send_json(payload);
-    self.request(request, headers, sender)
-  }
-
-  #[inline]
-  fn post_form(
-    &self,
-    url: &str,
-    headers: Option<&Headers>,
-    payload: &Form<'_>,
-  ) -> Result<HttpResponse, Self::Error> {
-    let request = self.agent.post(url);
-    let sender = |req: Request| {
-      let payload = payload
-        .iter()
-        .map(|(key, val)| (*key, *val))
-        .collect::<Vec<_>>();
-
-      req.send_form(&payload)
-    };
-
     self.request(request, headers, sender)
   }
 

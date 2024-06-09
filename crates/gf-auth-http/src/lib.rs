@@ -9,7 +9,7 @@ mod ureq;
 
 #[cfg(any(feature = "client-reqwest", feature = "client-ureq"))]
 #[cfg(not(all(feature = "client-reqwest", feature = "client-ureq")))]
-pub use crate::common::{BaseHttpClient, CustomCertHttpClient, Form, Headers, HttpError, Query};
+pub use crate::common::{BaseHttpClient, CustomCertHttpClient, Headers, HttpError, Query};
 
 #[cfg(feature = "client-reqwest")]
 #[cfg(not(all(feature = "client-reqwest", feature = "client-ureq")))]

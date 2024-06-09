@@ -7,7 +7,6 @@ use serde::Serialize;
 
 pub type Headers = HashMap<String, String>;
 pub type Query<'a> = HashMap<&'a str, &'a str>;
-pub type Form<'a> = HashMap<&'a str, &'a str>;
 
 #[derive(thiserror::Error, Debug)]
 pub enum HttpError<T: Error> {
@@ -84,13 +83,6 @@ pub trait BaseHttpClient: Send + Default + Clone + fmt::Debug {
   ) -> Result<HttpResponse, Self::Error>
   where
     T: Serialize + Send + ?Sized + Sync;
-
-  async fn post_form(
-    &self,
-    url: &str,
-    headers: Option<&Headers>,
-    payload: &Form<'_>,
-  ) -> Result<HttpResponse, Self::Error>;
 
   async fn put<T>(
     &self,
