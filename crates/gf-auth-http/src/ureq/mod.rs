@@ -1,6 +1,7 @@
 mod r#impl;
 mod utils;
 
+use std::io::Read;
 use std::time::Duration;
 
 use crate::common::{
@@ -72,11 +73,14 @@ impl UreqClient {
 
     log::info!("Making request {:?}", request);
     match send_request(request) {
-      Ok(response) => Ok(HttpResponse::new(
-        response.status(),
-        convert_headers(&response),
-        response.into_string()?,
-      )),
+      Ok(response) => {
+        let mut buf = vec![];
+        let headers = convert_headers(&response);
+        let status = response.status();
+        response.into_reader().read_to_end(&mut buf);
+
+        Ok(HttpResponse::new(status, headers, buf))
+      }
       Err(err) => Err(err.into()),
     }
   }
@@ -258,7 +262,7 @@ mod tests {
       &Default::default(),
     )?;
 
-    assert_eq!(response.status(), 200);
+    assert_eq!(response.status, 200);
     Ok(())
   }
 

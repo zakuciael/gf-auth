@@ -74,7 +74,7 @@ impl ReqwestClient {
       Ok(HttpResponse::new(
         response.status().as_u16(),
         convert_headers(response.headers()),
-        response.text().await?,
+        response.bytes().await?.into(),
       ))
     } else {
       Err(response.into())
@@ -232,7 +232,7 @@ mod tests {
       )
       .await?;
 
-    assert_eq!(response.status(), 200);
+    assert_eq!(response.status, 200);
     Ok(())
   }
 

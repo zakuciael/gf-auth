@@ -28,14 +28,15 @@ impl<T: Error> HttpError<T> {
   }
 }
 
+#[derive(Debug, Clone)]
 pub struct HttpResponse {
-  status: u16,
-  headers: Headers,
-  body: String,
+  pub status: u16,
+  pub headers: Headers,
+  pub body: Vec<u8>,
 }
 
 impl HttpResponse {
-  pub fn new(status: u16, headers: Headers, body: String) -> Self {
+  pub fn new(status: u16, headers: Headers, body: Vec<u8>) -> Self {
     HttpResponse {
       status,
       headers,
@@ -43,14 +44,11 @@ impl HttpResponse {
     }
   }
 
-  pub fn status(&self) -> u16 {
-    self.status
+  pub fn text(&self) -> String {
+    String::from_utf8_lossy(&self.body).to_string()
   }
 
-  pub fn headers(&self) -> &Headers {
-    &self.headers
-  }
-  pub fn body(&self) -> &str {
+  pub fn bytes(&self) -> &[u8] {
     &self.body
   }
 }
