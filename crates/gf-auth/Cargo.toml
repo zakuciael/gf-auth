@@ -27,8 +27,11 @@ url = "2.2.2"
 chrono = { version = "0.4.38", features = ["serde", "now"] }
 rand = { version = "0.8.5", features = ["serde"] }
 futures = "0.3.30"
+http = "1.1.0"
+uuid = { version = "1.8.0", features = ["v4"] }
 
 [dev-dependencies]
+serde_plain = { version = "1.0.2" }
 tokio = { version = "1.37.0", features = ["full"] }
 
 [features]

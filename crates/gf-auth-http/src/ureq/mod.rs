@@ -1,14 +1,15 @@
 mod r#impl;
 mod utils;
 
+use std::io::Read;
 use std::time::Duration;
 
 use crate::common::{
-  BaseHttpClient, CustomCertHttpClient, Form, Headers, HttpError, HttpResponse, Query,
+  BaseHttpClient, CustomCertHttpClient, Headers, HttpError, HttpResponse, Query,
 };
 use crate::ureq::utils::convert_headers;
 use maybe_async::sync_impl;
-use serde_json::Value;
+use serde::Serialize;
 use ureq::{Agent, AgentBuilder, Error, Request, Response};
 
 #[cfg(all(
@@ -72,11 +73,14 @@ impl UreqClient {
 
     log::info!("Making request {:?}", request);
     match send_request(request) {
-      Ok(response) => Ok(HttpResponse::new(
-        response.status(),
-        convert_headers(&response),
-        response.into_string()?,
-      )),
+      Ok(response) => {
+        let mut buf = vec![];
+        let headers = convert_headers(&response);
+        let status = response.status();
+        response.into_reader().read_to_end(&mut buf);
+
+        Ok(HttpResponse::new(status, headers, buf))
+      }
       Err(err) => Err(err.into()),
     }
   }
@@ -104,65 +108,54 @@ impl BaseHttpClient for UreqClient {
   }
 
   #[inline]
-  fn post(
+  fn post<T>(
     &self,
     url: &str,
     headers: Option<&Headers>,
-    payload: &Value,
-  ) -> Result<HttpResponse, Self::Error> {
+    payload: &T,
+  ) -> Result<HttpResponse, Self::Error>
+  where
+    T: Serialize + Send + ?Sized + Sync,
+  {
     let request = self.agent.post(url);
-    let sender = |req: Request| req.send_json(payload.clone());
+    let sender = |req: Request| req.send_json(payload);
     self.request(request, headers, sender)
   }
 
   #[inline]
-  fn post_form(
+  fn put<T>(
     &self,
     url: &str,
     headers: Option<&Headers>,
-    payload: &Form<'_>,
-  ) -> Result<HttpResponse, Self::Error> {
-    let request = self.agent.post(url);
-    let sender = |req: Request| {
-      let payload = payload
-        .iter()
-        .map(|(key, val)| (*key, *val))
-        .collect::<Vec<_>>();
-
-      req.send_form(&payload)
-    };
-
-    self.request(request, headers, sender)
-  }
-
-  #[inline]
-  fn put(
-    &self,
-    url: &str,
-    headers: Option<&Headers>,
-    payload: &Value,
-  ) -> Result<HttpResponse, Self::Error> {
+    payload: &T,
+  ) -> Result<HttpResponse, Self::Error>
+  where
+    T: Serialize + Send + ?Sized + Sync,
+  {
     let request = self.agent.put(url);
-    let sender = |req: Request| req.send_json(payload.clone());
+    let sender = |req: Request| req.send_json(payload);
     self.request(request, headers, sender)
   }
 
   #[inline]
-  fn delete(
+  fn delete<T>(
     &self,
     url: &str,
     headers: Option<&Headers>,
-    payload: &Value,
-  ) -> Result<HttpResponse, Self::Error> {
+    payload: &T,
+  ) -> Result<HttpResponse, Self::Error>
+  where
+    T: Serialize + Send + ?Sized + Sync,
+  {
     let request = self.agent.delete(url);
-    let sender = |req: Request| req.send_json(payload.clone());
+    let sender = |req: Request| req.send_json(payload);
     self.request(request, headers, sender)
   }
 
-  fn options(&self, url: &str, headers: Option<&Headers>) -> Result<HttpResponse, Self::Error> {
+  fn options(&self, url: &str, headers: &Headers) -> Result<HttpResponse, Self::Error> {
     let request = self.agent.request("OPTIONS", url);
     let sender = |req: Request| req.call();
-    self.request(request, headers, sender)
+    self.request(request, Some(headers), sender)
   }
 }
 
@@ -269,7 +262,7 @@ mod tests {
       &Default::default(),
     )?;
 
-    assert_eq!(response.status(), 200);
+    assert_eq!(response.status, 200);
     Ok(())
   }
 
