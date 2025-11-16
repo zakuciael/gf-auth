@@ -13,9 +13,9 @@
 </h4>
 <br />
 
-> [!NOTE]
-> Please note that this library is currently being actively developed, which means there may be significant changes that
-> could cause compatibility issues between different releases.
+> [!WARNING]
+> This project is no longer actevly maintained, due to my focus being shifted into developing the **[zakuciael/nosapi](https://github.com/zakuciael/nosapi)** project.  
+> Which is planned to be a collection of crates related to NosTale, including things like authentication (like this crate!).
 
 ## Credits
 
