@@ -4,9 +4,9 @@ mod utils;
 use crate::reqwest::utils::convert_headers;
 use maybe_async::async_impl;
 use reqwest::{Client, ClientBuilder, Error, Method, RequestBuilder};
-use serde_json::Value;
+use serde::Serialize;
 
-use crate::common::{CustomCertHttpClient, Form, Headers, HttpError, HttpResponse, Query};
+use crate::common::{CustomCertHttpClient, Headers, HttpError, HttpResponse, Query};
 
 #[cfg(all(
   any(
@@ -74,7 +74,7 @@ impl ReqwestClient {
       Ok(HttpResponse::new(
         response.status().as_u16(),
         convert_headers(response.headers()),
-        response.text().await?,
+        response.bytes().await?.into(),
       ))
     } else {
       Err(response.into())
@@ -99,59 +99,54 @@ impl crate::common::BaseHttpClient for ReqwestClient {
   }
 
   #[inline]
-  async fn post(
+  async fn post<T>(
     &self,
     url: &str,
     headers: Option<&Headers>,
-    payload: &Value,
-  ) -> Result<HttpResponse, Self::Error> {
+    payload: &T,
+  ) -> Result<HttpResponse, Self::Error>
+  where
+    T: Serialize + Send + ?Sized + Sync,
+  {
     self
       .request(Method::POST, url, headers, |req| req.json(payload))
       .await
   }
 
   #[inline]
-  async fn post_form(
+  async fn put<T>(
     &self,
     url: &str,
     headers: Option<&Headers>,
-    payload: &Form<'_>,
-  ) -> Result<HttpResponse, Self::Error> {
-    self
-      .request(Method::POST, url, headers, |req| req.form(payload))
-      .await
-  }
-
-  #[inline]
-  async fn put(
-    &self,
-    url: &str,
-    headers: Option<&Headers>,
-    payload: &Value,
-  ) -> Result<HttpResponse, Self::Error> {
+    payload: &T,
+  ) -> Result<HttpResponse, Self::Error>
+  where
+    T: Serialize + Send + ?Sized + Sync,
+  {
     self
       .request(Method::PUT, url, headers, |req| req.json(payload))
       .await
   }
 
   #[inline]
-  async fn delete(
+  async fn delete<T>(
     &self,
     url: &str,
     headers: Option<&Headers>,
-    payload: &Value,
-  ) -> Result<HttpResponse, Self::Error> {
+    payload: &T,
+  ) -> Result<HttpResponse, Self::Error>
+  where
+    T: Serialize + Send + ?Sized + Sync,
+  {
     self
       .request(Method::DELETE, url, headers, |req| req.json(payload))
       .await
   }
 
-  async fn options(
-    &self,
-    url: &str,
-    headers: Option<&Headers>,
-  ) -> Result<HttpResponse, Self::Error> {
-    self.request(Method::OPTIONS, url, headers, |req| req).await
+  async fn options(&self, url: &str, headers: &Headers) -> Result<HttpResponse, Self::Error> {
+    self
+      .request(Method::OPTIONS, url, Some(headers), |req| req)
+      .await
   }
 }
 #[cfg(any(
@@ -237,7 +232,7 @@ mod tests {
       )
       .await?;
 
-    assert_eq!(response.status(), 200);
+    assert_eq!(response.status, 200);
     Ok(())
   }
 

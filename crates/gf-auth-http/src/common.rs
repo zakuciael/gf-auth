@@ -3,11 +3,10 @@ use std::error::Error;
 use std::{fmt, io};
 
 use maybe_async::maybe_async;
-use serde_json::Value;
+use serde::Serialize;
 
 pub type Headers = HashMap<String, String>;
 pub type Query<'a> = HashMap<&'a str, &'a str>;
-pub type Form<'a> = HashMap<&'a str, &'a str>;
 
 #[derive(thiserror::Error, Debug)]
 pub enum HttpError<T: Error> {
@@ -29,14 +28,15 @@ impl<T: Error> HttpError<T> {
   }
 }
 
+#[derive(Debug, Clone)]
 pub struct HttpResponse {
-  status: u16,
-  headers: Headers,
-  body: String,
+  pub status: u16,
+  pub headers: Headers,
+  pub body: Vec<u8>,
 }
 
 impl HttpResponse {
-  pub fn new(status: u16, headers: Headers, body: String) -> Self {
+  pub fn new(status: u16, headers: Headers, body: Vec<u8>) -> Self {
     HttpResponse {
       status,
       headers,
@@ -44,14 +44,11 @@ impl HttpResponse {
     }
   }
 
-  pub fn status(&self) -> u16 {
-    self.status
+  pub fn text(&self) -> String {
+    String::from_utf8_lossy(&self.body).to_string()
   }
 
-  pub fn headers(&self) -> &Headers {
-    &self.headers
-  }
-  pub fn body(&self) -> &str {
+  pub fn bytes(&self) -> &[u8] {
     &self.body
   }
 }
@@ -76,39 +73,34 @@ pub trait BaseHttpClient: Send + Default + Clone + fmt::Debug {
     payload: &Query,
   ) -> Result<HttpResponse, Self::Error>;
 
-  async fn post(
+  async fn post<T>(
     &self,
     url: &str,
     headers: Option<&Headers>,
-    payload: &Value,
-  ) -> Result<HttpResponse, Self::Error>;
+    payload: &T,
+  ) -> Result<HttpResponse, Self::Error>
+  where
+    T: Serialize + Send + ?Sized + Sync;
 
-  async fn post_form(
+  async fn put<T>(
     &self,
     url: &str,
     headers: Option<&Headers>,
-    payload: &Form<'_>,
-  ) -> Result<HttpResponse, Self::Error>;
+    payload: &T,
+  ) -> Result<HttpResponse, Self::Error>
+  where
+    T: Serialize + Send + ?Sized + Sync;
 
-  async fn put(
+  async fn delete<T>(
     &self,
     url: &str,
     headers: Option<&Headers>,
-    payload: &Value,
-  ) -> Result<HttpResponse, Self::Error>;
+    payload: &T,
+  ) -> Result<HttpResponse, Self::Error>
+  where
+    T: Serialize + Send + ?Sized + Sync;
 
-  async fn delete(
-    &self,
-    url: &str,
-    headers: Option<&Headers>,
-    payload: &Value,
-  ) -> Result<HttpResponse, Self::Error>;
-
-  async fn options(
-    &self,
-    url: &str,
-    headers: Option<&Headers>,
-  ) -> Result<HttpResponse, Self::Error>;
+  async fn options(&self, url: &str, headers: &Headers) -> Result<HttpResponse, Self::Error>;
 }
 
 pub trait CustomCertHttpClient {
